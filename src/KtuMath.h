@@ -17,7 +17,7 @@ public:
     static constexpr KREAL nan = std::numeric_limits<KREAL>::quiet_NaN();
     static constexpr KREAL inf = std::numeric_limits<KREAL>::infinity();
     static constexpr KREAL neginf = -inf;
-    static constexpr KREAL eps = std::numeric_limits<KREAL>::epsilon();
+    static constexpr KREAL eps = 1e-7;
 
 
     /*************** SCALAR ALGORITHM *****************/
@@ -50,7 +50,10 @@ public:
     static bool almostEqual(KREAL x1, KREAL x2, KREAL tol = 1e-5);
     static bool almostEqualRel(KREAL x1, KREAL x2, KREAL rel_tol = 0.001);
 
-    static KREAL clamp(KREAL x, KREAL low, KREAL high) { return std::max(std::min(x, high), low); } // 确保value在[low, high]之间
+    // 确保value在[low, high]之间
+    static KREAL clamp(KREAL x, KREAL low, KREAL high) { 
+        return std::max(std::min(x, high), low); 
+    } 
 
 
     // 基于base的对数值 --> 自然对数值
@@ -118,7 +121,6 @@ public:
     static KREAL sum2(const KREAL x[], unsigned n); // 各元素平方之和
     static KREAL sumPower(const KREAL x[], unsigned n, KREAL power); // 各元素绝对值的power次方之和
     static KREAL norm(const KREAL x[], unsigned n, KREAL power); // power阶范式
-    static void  normalize(const KREAL x[], unsigned n, KREAL power, KREAL newNorm); // 对x做power阶范式规范化处理
 
     // Convert the vector x to probilities.  Divide each indice by the sum of the vector
     static void prob(KREAL x[]/*inout*/, unsigned n);
@@ -207,8 +209,8 @@ public:
 
 
 private:
-    KtuMath() { }
-    ~KtuMath() { }
+    KtuMath() {}
+    ~KtuMath() {}
 };
 
 
@@ -221,11 +223,13 @@ void KtuMath<KREAL>::killDenormal(KREAL& x)
     x -= antiDenormal;
 }
 
+
 template<class KREAL>
 bool KtuMath<KREAL>::almostEqual(KREAL x1, KREAL x2, KREAL tol)
 {
     return std::abs(x1 - x2) <= tol;
 }
+
 
 template<class KREAL>
 bool KtuMath<KREAL>::almostEqualRel(KREAL x1, KREAL x2, KREAL rel_tol)
@@ -237,6 +241,7 @@ bool KtuMath<KREAL>::almostEqualRel(KREAL x1, KREAL x2, KREAL rel_tol)
         return false;
     return diff <= rel_tol*(std::abs(x1) +std::abs(x2));
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::addLog(KREAL x, KREAL y)
@@ -254,6 +259,7 @@ KREAL KtuMath<KREAL>::addLog(KREAL x, KREAL y)
         return y + log(1 + std::exp(x - y));
     }
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::subLog(KREAL x, KREAL y)
@@ -320,6 +326,7 @@ KREAL KtuMath<KREAL>::entropy(const KREAL x[], unsigned n)
     return (std::log(Z) - H / Z) / std::log<KREAL>(2);
 }
 
+
 // KL散度用于计算两个随机变量的差异程度，又称为信息增益、相对熵。
 // A关于B的KL散度数学定义为：
 //   KL(A || B) = E(A) - Sum{ PA(xi) * log(PB(xi)) }
@@ -336,6 +343,7 @@ KREAL KtuMath<KREAL>::relEntropy(const KREAL x[], const KREAL y[], unsigned n)
     return rel_entropy;
 }
 
+
 // 交叉熵的意义是：使用随机变量B的最优编码方式对随机变量A编码所需要的字符数。
 //   具体来说就是使用哈夫曼编码却根据B的概率分布对A进行编码，所需要的编码数。
 // 交叉熵 = KL散度 + 熵
@@ -350,6 +358,7 @@ KREAL KtuMath<KREAL>::crossEntropy(const KREAL x[], const KREAL y[], unsigned n)
     return -cross_entropy;
 }
 
+
 template<class KREAL>
 KREAL KtuMath<KREAL>::gini(const KREAL x[], unsigned n)
 {
@@ -363,6 +372,7 @@ KREAL KtuMath<KREAL>::gini(const KREAL x[], unsigned n)
 
     return 1.0 - G / (Z * Z);
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::expAndNorm(KREAL x[], unsigned n)
@@ -392,6 +402,7 @@ KREAL KtuMath<KREAL>::expAndNorm(KREAL x[], unsigned n)
     return std::log(Z) + maxValue;
 }
 
+
 template<class KREAL>
 void KtuMath<KREAL>::scale(KREAL x[], unsigned n, KREAL alpha)
 {
@@ -406,6 +417,7 @@ void KtuMath<KREAL>::scale(KREAL x[], unsigned n, KREAL alpha)
         x[i] *= alpha;
 }
 
+
 template<class KREAL>
 void KtuMath<KREAL>::shift(KREAL x[], unsigned n, KREAL dc)
 {
@@ -419,6 +431,7 @@ void KtuMath<KREAL>::shift(KREAL x[], unsigned n, KREAL dc)
     for (; i < n; i++)
         x[i] += dc;
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::sum(const KREAL x[], unsigned n)
@@ -438,6 +451,7 @@ KREAL KtuMath<KREAL>::sum(const KREAL x[], unsigned n)
     return tag;
 }
 
+
 template<class KREAL>
 KREAL KtuMath<KREAL>::sumAbs(const KREAL x[], unsigned n)
 {
@@ -455,6 +469,7 @@ KREAL KtuMath<KREAL>::sumAbs(const KREAL x[], unsigned n)
 
     return tag;
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::sum2(const KREAL x[], unsigned n)
@@ -474,6 +489,7 @@ KREAL KtuMath<KREAL>::sum2(const KREAL x[], unsigned n)
     return tag;
 }
 
+
 template<class KREAL>
 KREAL KtuMath<KREAL>::sumPower(const KREAL x[], unsigned n, KREAL power)
 {
@@ -483,6 +499,7 @@ KREAL KtuMath<KREAL>::sumPower(const KREAL x[], unsigned n, KREAL power)
 
     return tag;
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::norm(const KREAL x[], unsigned n, KREAL power)
@@ -501,14 +518,6 @@ KREAL KtuMath<KREAL>::norm(const KREAL x[], unsigned n, KREAL power)
     }
 }
 
-template<class KREAL>
-void KtuMath<KREAL>::normalize(const KREAL x[], unsigned n, KREAL power, KREAL newNorm)
-{
-    assert(newNorm > 0);
-    KREAL oldnorm = norm(x, n, power);
-    if (oldnorm > 0.0)
-        scale(x, n, newNorm / oldnorm);
-}
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::product(const KREAL x[], unsigned n)
@@ -528,6 +537,7 @@ KREAL KtuMath<KREAL>::product(const KREAL x[], unsigned n)
     return tag;
 }
 
+
 template<class KREAL>
 KREAL KtuMath<KREAL>::var(const KREAL x[], unsigned n, KREAL mean)
 {
@@ -541,6 +551,7 @@ KREAL KtuMath<KREAL>::var(const KREAL x[], unsigned n, KREAL mean)
 
     return nan;
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::dot(const KREAL x[], const KREAL y[], unsigned n)
@@ -567,6 +578,7 @@ KREAL KtuMath<KREAL>::dot(const KREAL x[], const KREAL y[], unsigned n)
     return d;
 }
 
+
 template<class KREAL>
 void KtuMath<KREAL>::add(const KREAL x[], const KREAL y[], KREAL z[], unsigned n)
 {
@@ -580,6 +592,7 @@ void KtuMath<KREAL>::add(const KREAL x[], const KREAL y[], KREAL z[], unsigned n
     for (; i < n; i++)
         z[i] = x[i] + y[i];
 }
+
 
 template<class KREAL>
 void KtuMath<KREAL>::sub(const KREAL x[], const KREAL y[], KREAL z[], unsigned n)
@@ -595,11 +608,13 @@ void KtuMath<KREAL>::sub(const KREAL x[], const KREAL y[], KREAL z[], unsigned n
         z[i] = x[i] - y[i];
 }
 
+
 template<class KREAL>
 void KtuMath<KREAL>::subMean(KREAL x[], unsigned n)
 {
     shift(x, n, -mean(x, n));
 }
+
 
 template<class KREAL>
 void KtuMath<KREAL>::mul(const KREAL x[], const KREAL y[], KREAL z[], unsigned n)
@@ -615,11 +630,13 @@ void KtuMath<KREAL>::mul(const KREAL x[], const KREAL y[], KREAL z[], unsigned n
         z[i] = x[i] * y[i];
 }
 
+
 template<class KREAL>
 KREAL KtuMath<KREAL>::mean(const KREAL x[], unsigned n)
 {
     return sum(x, n) / n;
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::nonZeroMean(const KREAL x[], unsigned n)
@@ -638,6 +655,7 @@ KREAL KtuMath<KREAL>::nonZeroMean(const KREAL x[], unsigned n)
     return tag / KREAL(nonZeros);
 }
 
+
 template<class KREAL>
 void KtuMath<KREAL>::prob(KREAL x[]/*inout*/, unsigned n)
 {
@@ -648,12 +666,14 @@ void KtuMath<KREAL>::prob(KREAL x[]/*inout*/, unsigned n)
         scale(x, n, 1.0 / sum);
 }
 
+
 template<class KREAL>
  KREAL KtuMath<KREAL>::min(const KREAL x[], unsigned n)
 {
     auto iter = std::min_element(x, x + n);
     return *iter;
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::max(const KREAL x[], unsigned n)
@@ -662,6 +682,7 @@ KREAL KtuMath<KREAL>::max(const KREAL x[], unsigned n)
     return *iter;
 }
 
+
 template<class KREAL>
 std::pair<KREAL, KREAL> KtuMath<KREAL>::minmax(const KREAL x[], unsigned n)
 {
@@ -669,17 +690,20 @@ std::pair<KREAL, KREAL> KtuMath<KREAL>::minmax(const KREAL x[], unsigned n)
     return { *iter.first, *iter.second };
 }
 
+
 template<class KREAL>
 unsigned KtuMath<KREAL>::argMin(const KREAL x[], unsigned n)
 {
     return std::min_element(x, x + n) - x;
 }
 
+
 template<class KREAL>
 unsigned KtuMath<KREAL>::argMax(const KREAL x[], unsigned n)
 {
     return std::max_element(x, x + n) - x;
 }
+
 
 template<class KREAL>
 unsigned KtuMath<KREAL>::argRand(const KREAL x[], unsigned n)
@@ -695,12 +719,14 @@ unsigned KtuMath<KREAL>::argRand(const KREAL x[], unsigned n)
     return -1;
 }
 
+
 template<class KREAL>
 std::pair<unsigned, unsigned> KtuMath<KREAL>::argMixMax(const KREAL x[], unsigned n)
 {
     auto iter = std::minmax_element(x, x + n);
     return { iter.first - x, *iter.second - x };
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::quantile(const KREAL a[], unsigned n, KREAL factor)
@@ -714,6 +740,7 @@ KREAL KtuMath<KREAL>::quantile(const KREAL a[], unsigned n, KREAL factor)
     if(a[left + 1] == a[left]) return a[left];
     return a[left] + (place - left) * (a[left + 1] - a[left]);
 }
+
 
 template<class KREAL>
 std::vector<KREAL> KtuMath<KREAL>::combAdd(const std::vector<KREAL>& x, const std::vector<KREAL>& y)
@@ -738,6 +765,7 @@ std::vector<KREAL> KtuMath<KREAL>::combAdd(const std::vector<KREAL>& x, const st
     return result;
 }
 
+
 template<class KREAL>
 std::vector<KREAL> KtuMath<KREAL>::combMul(const std::vector<KREAL>& x, const std::vector<KREAL>& y)
 {
@@ -761,6 +789,7 @@ std::vector<KREAL> KtuMath<KREAL>::combMul(const std::vector<KREAL>& x, const st
     return result;
 }
 
+
 template<class KREAL>
 unsigned KtuMath<KREAL>::getZeroCrossing(const KREAL x[], unsigned n)
 {
@@ -779,12 +808,14 @@ void KtuMath<KREAL>::applyFloor(KREAL x[], unsigned n, KREAL floor)
         x[i] = std::max(x[i], floor);
 }
 
+
 template<class KREAL>
 void KtuMath<KREAL>::applyLog(KREAL x[], unsigned n)
 {
     for (unsigned i = 0; i < n; i++)
         x[i] = std::log(x[i]);
 }
+
 
 template<class KREAL>
 void KtuMath<KREAL>::applyExp(KREAL x[], unsigned n)
@@ -793,11 +824,13 @@ void KtuMath<KREAL>::applyExp(KREAL x[], unsigned n)
         x[i] = std::exp(x[i]);
 }
 
+
 template<class KREAL>
 void KtuMath<KREAL>::assign(KREAL x[], unsigned n, KREAL val)
 {
     std::fill(x, x + n, val);
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::binomialCoeff(KREAL N, KREAL K)

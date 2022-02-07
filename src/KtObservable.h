@@ -102,8 +102,9 @@ public:
 
     // 重新激活向观察者发送notify
     void reset() {
-        frozen_ = false;
+        freeze();
         actives_ = 0;
+        frozen_ = false;
     }
 
 private:

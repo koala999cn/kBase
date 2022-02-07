@@ -147,6 +147,8 @@
     <ClCompile Include="test.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\KtObservable.h" />
+    <ClInclude Include="..\src\KtuMath.h" />
     <ClInclude Include="..\src\KuPathUtil.h" />
     <ClInclude Include="..\src\KuStrUtil.h" />
   </ItemGroup>
