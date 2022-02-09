@@ -6,6 +6,27 @@
 // 一个单例实现
 // @use_shared_ptr: 是否使用std::shared_ptr
 // @use_lock: 是否提供线程安全支持
+
+/* USAGE:
+
+	class A
+	{
+	public:
+
+	    // A的实现
+		// ...
+
+	private:
+		A() {}
+
+		friend KtSingleton<A, true>; // 仅允许KtSingleton创建A对象，注意模板参数要与使用的一致
+	};
+
+	#define singletonA KtSingleton<A, true>::instance()
+
+	// 后续可以使用singletonA->调用A的公开成员
+
+ */
 template<typename T, bool use_shared_ptr = true, bool use_lock = false>
 class KtSingleton
 {
