@@ -28,27 +28,30 @@ public:
 
     static bool containUndefined(const KREAL x[], unsigned n);
 
-    // x, 返回1; 小于0, 返回-1; 等于0, 返回0.
-    static int sign(KREAL x) {
-        return (x > 0) ? 1 : ((x < 0) ? -1 : 0);
+    // return -1 for x < 0, 1 for x > 0, 0 for x == 0
+    static int sign(KREAL x) { 
+        return (x > 0) ? 1 : ((x < 0) ? -1 : 0); 
     }
 
-    static int trunc(KREAL x) {
-        return (x >= 0) ? static_cast<int>(x) : -static_cast<int>(-x);
+    // return the integer part of the input number
+    static int trunc(KREAL x) { 
+        return (x >= 0) ? static_cast<int>(x) : -static_cast<int>(-x); 
     }
 
-    static KREAL fract(KREAL x) { // Computes the fractional part of the input number.
-        return x - std::floor<KREAL>(x);
-    }
+    // return the fractional part of the input number
+    static KREAL fract(KREAL x) { return x - std::floor<KREAL>(x); }
 
-
-    static void killDenormal(KREAL& x); // 消除非正规化数值影响.若val为极小值，则置为0.
+    // 消除非正规化数值影响.若val为极小值，则置为0.
+    static void killDenormal(KREAL& x); 
 
     // 近似等于比较，一个绝对值版本，一个相对值版本
     static bool almostEqual(KREAL x1, KREAL x2, KREAL tol = 1e-5);
     static bool almostEqualRel(KREAL x1, KREAL x2, KREAL rel_tol = 0.001);
 
-    static KREAL clamp(KREAL x, KREAL low, KREAL high) { return std::max(std::min(x, high), low); } // 确保value在[low, high]之间
+    // 确保x在[low, high]之间
+    static KREAL clamp(KREAL x, KREAL low, KREAL high) { 
+        return std::max(std::min(x, high), low); 
+    } 
 
 
     // 基于base的对数值 --> 自然对数值
@@ -116,16 +119,25 @@ public:
     static KREAL sum2(const KREAL x[], unsigned n); // 各元素平方之和
     static KREAL sumPower(const KREAL x[], unsigned n, KREAL power); // 各元素绝对值的power次方之和
     static KREAL norm(const KREAL x[], unsigned n, KREAL power); // power阶范式
-    static void  normalize(const KREAL x[], unsigned n, KREAL power, KREAL newNorm); // 对x做power阶范式规范化处理
 
-    // Convert the vector x to probilities.  Divide each indice by the sum of the vector
-    static void prob(KREAL x[]/*inout*/, unsigned n);
 
+    // 各元素之积
     static KREAL product(const KREAL x[], unsigned n); // 各元素之积
-    static KREAL mean(const KREAL x[], unsigned n); // sum(x[i]) / n
+
+    // 平均值
+    static KREAL mean(const KREAL x[], unsigned n) { return sum(x, n) / n; }
+    
+    // 方差：Sum((x[i]-mean)^2) / n
+    // @UNBIASED: true代表无偏估计，结果为Sum((x[i]-mean)^2) / (n-1)
+    template<bool UNBIASED = false>
     static KREAL var(const KREAL x[], unsigned n, KREAL mean);
-    static KREAL var(const KREAL x[], unsigned n) { return var(x, n, mean(x, n)); }
-    static KREAL standardDeviation(const KREAL x[], unsigned n) { return std::sqrt(var(x, n)); }
+
+    template<bool UNBIASED = false>
+    static KREAL var(const KREAL x[], unsigned n) { return var<UNBIASED>(x, n, mean(x, n)); }
+
+    // 均方差：sqrt(var)
+    template<bool UNBIASED = false>
+    static KREAL stdDev(const KREAL x[], unsigned n) { return std::sqrt(var<UNBIASED>(x, n)); }
 
     // Evaluate mean of a vector from elements that are not zeros
     static KREAL nonZeroMean(const KREAL x[], unsigned n);
@@ -138,7 +150,7 @@ public:
     static void sub(const KREAL x[], const KREAL y[], KREAL r[], unsigned n); // r[i] = x[i] - y[i]
     static void mul(const KREAL x[], const KREAL y[], KREAL r[], unsigned n); // r[i] = x[i] * y[i]
 
-    static KREAL dot(const KREAL x[], const KREAL y[], unsigned n); // return Sum(x[i]*y[i])
+    static KREAL dot(const KREAL x[], const KREAL y[], unsigned n); // Sum(x[i]*y[i])
 
     // 加权加法：r[i] = phase1 * x[i] + phase2 * y[i]
     void wadd(const KREAL x[], KREAL phase1, const KREAL y[], KREAL phase2, KREAL r[], unsigned n) {
@@ -183,12 +195,26 @@ public:
     ////////////////////////////////////////////////////////////////////////
 
     // computes the entropy of a possibly unnormalized distribution
+    // 数学定义为：E(X) = -Sum{ P(xi) * log(P(xi)) }
+    // 物理解释：根据Shannon信息论，给定一个字符集的概率分布，可以设计一种编码，
+    // 使得表示该字符集组成的字符串平均需要的比特数最少。假设这个字符集是X，
+    // 对于其中某个字符xi，其出现概率为P(xi)，那么其最优编码（哈夫曼编码）
+    // 平均需要的比特数等于这个字符集的熵。
+    // 此处实现为了处理非归一化情况，实际求解E(px/sum(px))
     static KREAL entropy(const KREAL x[], unsigned n); // 支持KREAL=int的情况
 
-    //Shannon'tag Relative entropy (Kullback-Liebler Convergence)
-    //Normalized for A->B and B->A
+    // Shannon'tag Relative entropy (Kullback-Liebler Convergence)
+    // Normalized for A->B and B->A
+    // KL散度用于计算两个随机变量的差异程度，又称为信息增益、相对熵。
+    // A关于B的KL散度数学定义为：
+    //   KL(A || B) = E(A) - Sum{ PA(xi) * log(PB(xi)) }
+    // 由上式可以看出，KL散度是不对称的，即A关于B的KL散度不等于B关于A的KL散度
+    // 此处实现没有严格使用KL散度的数学定义，而是返回0.5(KL(A||B) + KL(B||A))
     static KREAL relEntropy(const KREAL x[], const KREAL y[], unsigned n);
 
+    // 交叉熵的意义是：使用随机变量B的最优编码方式对随机变量A编码所需要的字符数。
+    //   具体来说就是使用哈夫曼编码却根据B的概率分布对A进行编码，所需要的编码数。
+    // 交叉熵 = KL散度 + 熵
     static KREAL crossEntropy(const KREAL x[], const KREAL y[], unsigned n);
 
 
@@ -297,12 +323,6 @@ bool KtuMath<KREAL>::containUndefined(const KREAL x[], unsigned n)
 }
 
 
-// 数学定义为：E(X) = -Sum{ P(xi) * log(P(xi)) }
-// 物理解释：根据Shannon信息论，给定一个字符集的概率分布，可以设计一种编码，
-// 使得表示该字符集组成的字符串平均需要的比特数最少。假设这个字符集是X，
-// 对于其中某个字符xi，其出现概率为P(xi)，那么其最优编码（哈夫曼编码）
-// 平均需要的比特数等于这个字符集的熵。
-// 以下算法为了处理非归一化情况，实际求解E(px/sum(px))
 template<class KREAL>
 KREAL KtuMath<KREAL>::entropy(const KREAL x[], unsigned n)
 {
@@ -318,11 +338,7 @@ KREAL KtuMath<KREAL>::entropy(const KREAL x[], unsigned n)
     return (std::log(Z) - H / Z) / std::log<KREAL>(2);
 }
 
-// KL散度用于计算两个随机变量的差异程度，又称为信息增益、相对熵。
-// A关于B的KL散度数学定义为：
-//   KL(A || B) = E(A) - Sum{ PA(xi) * log(PB(xi)) }
-// 由上式可以看出，KL散度是不对称的，即A关于B的KL散度不等于B关于A的KL散度
-// 以下算法没有严格使用KL散度的数学定义，而是返回0.5(KL(A||B) + KL(B||A))
+
 template<class KREAL>
 KREAL KtuMath<KREAL>::relEntropy(const KREAL x[], const KREAL y[], unsigned n)
 {
@@ -334,9 +350,7 @@ KREAL KtuMath<KREAL>::relEntropy(const KREAL x[], const KREAL y[], unsigned n)
     return rel_entropy;
 }
 
-// 交叉熵的意义是：使用随机变量B的最优编码方式对随机变量A编码所需要的字符数。
-//   具体来说就是使用哈夫曼编码却根据B的概率分布对A进行编码，所需要的编码数。
-// 交叉熵 = KL散度 + 熵
+
 template<class KREAL>
 KREAL KtuMath<KREAL>::crossEntropy(const KREAL x[], const KREAL y[], unsigned n)
 {
@@ -499,14 +513,6 @@ KREAL KtuMath<KREAL>::norm(const KREAL x[], unsigned n, KREAL power)
     }
 }
 
-template<class KREAL>
-void KtuMath<KREAL>::normalize(const KREAL x[], unsigned n, KREAL power, KREAL newNorm)
-{
-    assert(newNorm > 0);
-    KREAL oldnorm = norm(x, n, power);
-    if (oldnorm > 0.0)
-        scale(x, n, newNorm / oldnorm);
-}
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::product(const KREAL x[], unsigned n)
@@ -527,6 +533,7 @@ KREAL KtuMath<KREAL>::product(const KREAL x[], unsigned n)
 }
 
 template<class KREAL>
+template<bool UNBIASED>
 KREAL KtuMath<KREAL>::var(const KREAL x[], unsigned n, KREAL mean)
 {
     if(n > 1) {
@@ -534,7 +541,7 @@ KREAL KtuMath<KREAL>::var(const KREAL x[], unsigned n, KREAL mean)
         for (unsigned i = 0; i < n; i++)
             sum2 += (x[i] - mean) * (x[i] - mean);
 
-        return sum2 / n;
+        return UNBIASED ? sum2 / (n - 1) : sum2 / n;
     }
 
     return nan;
@@ -613,11 +620,6 @@ void KtuMath<KREAL>::mul(const KREAL x[], const KREAL y[], KREAL z[], unsigned n
         z[i] = x[i] * y[i];
 }
 
-template<class KREAL>
-KREAL KtuMath<KREAL>::mean(const KREAL x[], unsigned n)
-{
-    return sum(x, n) / n;
-}
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::nonZeroMean(const KREAL x[], unsigned n)
@@ -626,8 +628,7 @@ KREAL KtuMath<KREAL>::nonZeroMean(const KREAL x[], unsigned n)
     unsigned nonZeros(0);
     for (unsigned i = 0; i < n; i++)
     {
-        if (x[i] != 0.0)
-        {
+        if (x[i] != 0) {
             tag += x[i];
             ++nonZeros;
         }
@@ -636,15 +637,6 @@ KREAL KtuMath<KREAL>::nonZeroMean(const KREAL x[], unsigned n)
     return tag / KREAL(nonZeros);
 }
 
-template<class KREAL>
-void KtuMath<KREAL>::prob(KREAL x[]/*inout*/, unsigned n)
-{
-    KREAL sum = sum(x, n);
-    if (sum == 0)
-        assign(x, n, 0);
-    else
-        scale(x, n, 1.0 / sum);
-}
 
 template<class KREAL>
  KREAL KtuMath<KREAL>::min(const KREAL x[], unsigned n)
