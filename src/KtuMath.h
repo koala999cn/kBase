@@ -177,8 +177,8 @@ public:
     static std::vector<KREAL> combMul(const std::vector<KREAL>& x, const std::vector<KREAL>& y);
 
     // 过零数和过零率
-    static unsigned getZeroCrossing(const KREAL x[], unsigned n);
-    static KREAL getZcr(const KREAL x[], unsigned n) { return  KREAL(getZeroCrossing(x, n)) / (n - 1); }
+    static unsigned zeroCrossing(const KREAL x[], unsigned n);
+    static KREAL zcr(const KREAL x[], unsigned n) { return  KREAL(getZeroCrossing(x, n)) / (n - 1); }
 
     static void applyFloor(KREAL x[], unsigned n, KREAL floor); // X = max(X, floor)
     static void applyExp(KREAL x[], unsigned n); // X = exp(X)
