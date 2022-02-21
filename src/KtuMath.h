@@ -78,6 +78,14 @@ public:
     // sinc(x) = sin(pi*x) / (pi*x)
     static KREAL sinc(KREAL x);
 
+    static KREAL asinh(KREAL x) {
+        return std::log(x + std::sqrt(x * x + 1));
+    }
+
+    static KREAL acosh(KREAL x) {
+        return std::log(x + std::sqrt(x * x - 1));
+    }
+
     // logit function
     // Inverse of the sigmoidal logistic function
     // Also known as log-odds score or ratio
