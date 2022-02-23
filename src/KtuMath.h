@@ -17,7 +17,7 @@ public:
     static constexpr KREAL nan = std::numeric_limits<KREAL>::quiet_NaN();
     static constexpr KREAL inf = std::numeric_limits<KREAL>::infinity();
     static constexpr KREAL neginf = -inf;
-    static constexpr KREAL eps = std::numeric_limits<KREAL>::epsilon();
+    static constexpr KREAL eps = static_cast<KREAL>(1e-6);
 
 
     /*************** SCALAR ALGORITHM *****************/
