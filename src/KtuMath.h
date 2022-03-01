@@ -195,7 +195,7 @@ public:
 
     // 过零数和过零率
     static unsigned zeroCrossing(const KREAL x[], unsigned n);
-    static KREAL zcr(const KREAL x[], unsigned n) { return  KREAL(getZeroCrossing(x, n)) / (n - 1); }
+    static KREAL zcr(const KREAL x[], unsigned n) { return  KREAL(zeroCrossing(x, n)) / (n - 1); }
 
     static void applyFloor(KREAL x[], unsigned n, KREAL floor); // X = max(X, floor)
     static void applyExp(KREAL x[], unsigned n); // X = exp(X)
@@ -769,7 +769,7 @@ std::vector<KREAL> KtuMath<KREAL>::combMul(const std::vector<KREAL>& x, const st
 }
 
 template<class KREAL>
-unsigned KtuMath<KREAL>::getZeroCrossing(const KREAL x[], unsigned n)
+unsigned KtuMath<KREAL>::zeroCrossing(const KREAL x[], unsigned n)
 {
     unsigned zcr(0);
     for (unsigned i = 1; i < n; i++)
