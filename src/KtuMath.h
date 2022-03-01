@@ -54,6 +54,15 @@ public:
     } 
 
 
+    static KREAL absMax(KREAL x, KREAL y) {
+        return std::max(std::abs(x), std::abs(y));
+    }
+
+    static KREAL absMin(KREAL x, KREAL y) {
+        return std::min(std::abs(x), std::abs(y));
+    }
+
+
     // 基于base的对数值 --> 自然对数值
     // ll为基于base的对数值，base == 0表示ll为非对数值
     static KREAL logFromBase(KREAL ll, KREAL base) {
@@ -238,6 +247,19 @@ public:
     static std::pair<unsigned, unsigned> argMixMax(const KREAL x[], unsigned n);
 
 
+    // x[i] = op(x[i])
+    template<typename UNARY_OP>
+    static void forEach(KREAL x[], unsigned n, UNARY_OP op);
+
+    // r[i] = op(x[i])
+    template<typename UNARY_OP>
+    static void forEach(const KREAL x[], KREAL r[], unsigned n, UNARY_OP op);
+
+    // r[i] = op(x[i], y[i])
+    template<typename BINARY_OP>
+    static void forEach(const KREAL x[], const KREAL y[], KREAL r[], unsigned n, BINARY_OP op);
+
+
 private:
     KtuMath() { }
     ~KtuMath() { }
@@ -412,33 +434,20 @@ KREAL KtuMath<KREAL>::expAndNorm(KREAL x[], unsigned n)
     return std::log(Z) + maxValue;
 }
 
-template<class KREAL>
+
+template<typename KREAL>
 void KtuMath<KREAL>::scale(KREAL x[], unsigned n, KREAL alpha)
 {
-    unsigned i = 0;
-    for (; i + 4 <= n; i += 4) {
-        x[i    ] *= alpha;
-        x[i + 1] *= alpha;
-        x[i + 2] *= alpha;
-        x[i + 3] *= alpha;
-    }
-    for (; i < n; i++)
-        x[i] *= alpha;
+    forEach(x, n, [alpha](KREAL x) { return x * alpha; });
 }
 
-template<class KREAL>
+
+template<typename KREAL>
 void KtuMath<KREAL>::shift(KREAL x[], unsigned n, KREAL dc)
 {
-    unsigned i = 0;
-    for (; i + 4 <= n; i += 4) {
-        x[i    ] += dc;
-        x[i + 1] += dc;
-        x[i + 2] += dc;
-        x[i + 3] += dc;
-    }
-    for (; i < n; i++)
-        x[i] += dc;
+    forEach(x, n, [dc](KREAL x) { return x + dc; });
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::sum(const KREAL x[], unsigned n)
@@ -805,4 +814,52 @@ KREAL KtuMath<KREAL>::binomialCoeff(KREAL N, KREAL K)
     for (int i = int(K + 1); i <= N; i++) { c += std::log(i); }
     for (int j = 1; j <= (N - K); j++) { c -= std::log(j); }
     return std::exp(c);
+}
+
+
+template<typename KREAL>
+template<typename UNARY_OP>
+void KtuMath<KREAL>::forEach(KREAL x[], unsigned n, UNARY_OP op)
+{
+    unsigned i = 0;
+    for (; i + 4 <= n; i += 4) {
+        x[i] = op(x[i]);
+        x[i + 1] = op(x[i + 1]);
+        x[i + 2] = op(x[i + 2]);
+        x[i + 3] = op(x[i + 3]);
+    }
+    for (; i < n; i++)
+        x[i] = op(x[i]);
+}
+
+
+template<typename KREAL>
+template<typename UNARY_OP>
+void KtuMath<KREAL>::forEach(const KREAL x[], KREAL r[], unsigned n, UNARY_OP op)
+{
+    unsigned i = 0;
+    for (; i + 4 <= n; i += 4) {
+        r[i] = op(x[i]);
+        r[i + 1] = op(x[i + 1]);
+        r[i + 2] = op(x[i + 2]);
+        r[i + 3] = op(x[i + 3]);
+    }
+    for (; i < n; i++)
+        r[i] = op(x[i]);
+}
+
+
+template<typename KREAL>
+template<typename BINARY_OP>
+void KtuMath<KREAL>::forEach(const KREAL x[], const KREAL y[], KREAL r[], unsigned n, BINARY_OP op)
+{
+    unsigned i = 0;
+    for (; i + 4 <= n; i += 4) {
+        r[i] = op(x[i], y[i]);
+        r[i + 1] = op(x[i + 1], y[i + 1]);
+        r[i + 2] = op(x[i + 2], y[i + 2]);
+        r[i + 3] = op(x[i + 3], y[i + 3]);
+    }
+    for (; i < n; i++)
+        r[i] = op(x[i], y[i]);
 }
