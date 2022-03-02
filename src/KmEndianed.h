@@ -12,6 +12,7 @@ public:
 	// 设定与获取目标数据的大小端格式
 	void setBigEndian(bool big = true) { big_ = big; }
 	void setLittleEndian(bool little = true) { big_ = !little; }
+                void flipEndian() { big_ = big_; }
 	bool isBigEndian() const { return big_; }
 	bool isLittleEndian() const { return !big_; }
 
