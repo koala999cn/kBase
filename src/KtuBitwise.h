@@ -11,22 +11,55 @@ class KtuBitwise
 
 public:
 	constexpr static const int kCharBits = 8;
-	constexpr static const int kIntBits = sizeof(INT) * char_bits;
+	constexpr static const int kIntBits = sizeof(INT) * kCharBits;
 	constexpr static const INT kAllZero = 0;
 	constexpr static const INT kAllOnes = ~INT(0);
 
 	// Determines if the number is odd.
-	static bool isOdd(INT x) { return (x % 2) == 1;  }
+	static bool isOdd(INT x) { return x & 1;  }
 
 	// Determines if the number is even.
 	static bool isEven(INT x) { return !isOdd(x); }
+
+	// 将x的第n位置1，最低位的序号为1，下同
+	static void set(INT& x, int n) {
+		assert(n <= kIntBits);
+		x |= 1 << n;
+	}
+
+	// 将x的第n位清零
+	static void clear(INT& x, int n) {
+		assert(n <= kIntBits);
+		x &= !(1 << n);
+	}
+
+	// 将x的第n位反转
+	static void flip(INT& x, int n) {
+		assert(n <= kIntBits);
+		x ^= (1 << (n - 1));
+	}
+
+	// x的第n位是否置1
+	static bool isSet(INT x, int n) {
+		assert(n <= kIntBits);
+		return (x >> (n - 1)) & 1;
+	}
+
+
+
+	// 清零x的最低有效位
+	static INT lsbClear(INT x) { return x & (x - 1); }
+
+	// leave only lowest bit
+	static INT lsbOnly(INT x) { return x & -x; }
+
 
 	// reverse right nth bits of x
 	static INT revbin(INT x, unsigned n);
 
 	// 判断n是否为2的幂
 	static bool isPower2(INT n) {
-		return n != 0 && !(n & (n - 1));
+		return n != 0 && lsbClear(n) == 0;
 	}
 
 	// 判断n是否为4的幂
@@ -99,7 +132,11 @@ public:
 	//  253 1111 1101   :   8
 	//  254 1111 1110   :   8
 	//  255 1111 1111   :   8
-	static int msbIndex(INT _x); 
+	static int msbIndex(INT x); 
+
+	//Find lowest lsb 
+	static int lsbIndex(INT x);
+
 
 	static INT gcd(INT m, INT n);
 
@@ -110,14 +147,14 @@ public:
 
 	/* Given X, an unsigned number, return the largest int Y such that 2**Y <= X.
 	   If X is 0, return -1.  */
-	static INT floorLog2(INT x);
+	static int floorLog2(INT x);
 
 	/* Given X, an unsigned number, return the largest Y such that 2**Y >= X.  */
-	static INT ceilLog2(INT x);
+	static int ceilLog2(INT x);
 
 	/* Return the logarithm of X, base 2, considering X unsigned,
 	   if X is a power of 2.  Otherwise, returns -1.  */
-	static INT exactLog2(INT x);
+	static int exactLog2(INT x);
 
 	/** Returns the closest power-of-two number less or equal to x.
 		@note 0 and 1 are powers of two, so FirstPO2From(0)==0 and FirstPO2From(1)==1.
@@ -136,19 +173,19 @@ public:
 	static int popCount(INT x); // popcount_hwi
 
 	// count leading zeros in an integer
-	static int clz(INT _x) {
-		return kIntBits - msbIndex(_x);
+	static int clz(INT x) {
+		return kIntBits - msbIndex(x);
 	}
 
-	// count tailing zeros in an integer
+	// count trailing zeros in an integer
 	static int ctz(INT x) {
-		return x ? floorLog2(x & -x) : kIntBits;
+		return x ? floorLog2(lsbOnly(x)) : kIntBits;
 	}
 
 	/* Similar to ctz, except that the least significant bit is numbered
 	starting from 1, and X == 0 yields 0.  */
 	static int ffs(INT x) {
-		return 1 + floorLog2(x & -x);
+		return 1 + floorLog2(lsbOnly(x));
 	}
 
 	//// -------------------------------------------------------------
@@ -163,8 +200,6 @@ public:
 	//!Higher bits are set to zero
 	static INT maskRight(INT val, int pos);
 
-	//Find lowest lsb 
-	static int lowestBitSet(INT x);
 
 	//!Rotate Left with carry over
 	static INT rol(INT val, int shift_register) {
@@ -214,7 +249,7 @@ INT KtuBitwise<INT>::revbin(INT x, unsigned n)
 	while(n-- > 0)
 	{
 		r <<= 1;
-		r += x&1;
+		r += x & 1;
 		x >>= 1;
 	}
 
@@ -244,14 +279,14 @@ template<typename INT>
 bool KtuBitwise<INT>::isPrime(INT n)
 {
 	// check base cases (0, 1, 2, 3, divisible by 2, divisible by 3)
-	if (_n <= 1)  return false;
-	else if (_n <= 3)  return true;
-	else if (!(_n & 1)) return false; // divisible by 2
-	else if (!(_n % 3)) return false; // divisible by 3
+	if (n <= 1)  return false;
+	else if (n <= 3)  return true;
+	else if (!(n & 1)) return false; // divisible by 2
+	else if (!(n % 3)) return false; // divisible by 3
 
 	unsigned int r = 5;
-	while (r*r <= _n) {
-		if ((_n % r) == 0 || (_n % (r + 2)) == 0)
+	while (r*r <= n) {
+		if ((n % r) == 0 || (n % (r + 2)) == 0)
 			return false;
 		r += 6;
 	}
@@ -305,7 +340,6 @@ int KtuBitwise<INT>::floorLog2(INT x)
 
 	if(x == 0) return -1;
 
-	/// TODO: relpace T with HOST_WIDE_INT
 	if(sizeof(x) > 8)
 		if(x >= (INT) 1 << (t + 64)) t += 64;
 	if(sizeof(x) > 4)
@@ -331,14 +365,14 @@ int KtuBitwise<INT>::ceilLog2(INT x)
 template<typename INT>
 int KtuBitwise<INT>::exactLog2(INT x)
 {
-	if(x != (x & -x)) return -1;
+	if(x != lsbOnly(x)) return -1;
 	return floorLog2(x);
 }
 
 template<typename INT>
 INT KtuBitwise<INT>::floorPower2(INT x)
 {
-	if(x == (x & -x)) return x;
+	if(x == lsbOnly(x)) return x;
 	return ceilPower2(x) / 2;
 }
 
@@ -416,12 +450,12 @@ int KtuBitwise<INT>::count(INT x)
 
 
 template<typename INT>
-int KtuBitwise<INT>::msbIndex(INT _x)
+int KtuBitwise<INT>::msbIndex(INT x)
 {
 #if 0
 	// slow method; look one bit at a time
 	int bits;
-	for (bits = 0; _x != 0 && bits < 32; _x >>= 1, ++bits)
+	for (bits = 0; x != 0 && bits < 32; x >>= 1, ++bits)
 		;
 	return bits;
 #endif
@@ -463,7 +497,7 @@ int KtuBitwise<INT>::msbIndex(INT _x)
 	// look for first non-zero byte
 	int bits = kIntBits;
 	for (unsigned int i = bits; i>0; i -= kCharBits) {
-		unsigned int b = (_x >> (i - kCharBits)) & 0xff;
+		unsigned int b = (x >> (i - kCharBits)) & 0xff;
 		if (b)
 			return bits - leading_zeros[b];
 		else
@@ -523,7 +557,7 @@ INT KtuBitwise<INT>::maskRight(INT val, int pos)
 
 
 template<typename INT>
-int KtuBitwise<INT>::lowestBitSet(INT x)
+int KtuBitwise<INT>::lsbIndex(INT x)
 {
 	assert(sizeof(x) == 4); // TODO: 仅支持32位整数
 
@@ -534,8 +568,7 @@ int KtuBitwise<INT>::lowestBitSet(INT x)
 		31, 27, 13, 23, 21, 19, 16,  7, 26, 12, 18,  6, 11,  5, 10,  9
 	};
 
-	// leave only lowest bit
-	x &= -int(x);
+	x  = lsbOnly(x);
 
 	// DeBruijn constant
 	size_t ux = size_t(x) * 0x077CB531;
