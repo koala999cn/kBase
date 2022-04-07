@@ -1,13 +1,12 @@
 ﻿#include "KuStrUtil.h"
 #include <sstream>
 #include <assert.h>
-#include <regex>
 
 
 void KuStrUtil::toUpper(char* str)
 {
 	while (*str != 0) {
-		*str = std::toupper(*str);
+		*str = ::toupper(*str); 
 		++str;
 	}
 }
@@ -16,14 +15,14 @@ void KuStrUtil::toUpper(char* str)
 void KuStrUtil::toUpper(std::string& str) 
 {
 	std::transform(str.begin(), str.end(), str.begin(),
-		[](unsigned char c) -> unsigned char { return std::toupper(c); });
+		[](unsigned char c) { return ::toupper(c); });
 }
 
 
 void KuStrUtil::toLower(char* str) 
 {
 	while (*str != 0) {
-		*str = std::tolower(*str);
+		*str = ::tolower(*str);
 		++str;
 	}
 }
@@ -32,13 +31,7 @@ void KuStrUtil::toLower(char* str)
 void KuStrUtil::toLower(std::string& str) 
 {
 	std::transform(str.begin(), str.end(), str.begin(),
-		[](unsigned char c) -> unsigned char { return std::tolower(c); });
-}
-
-
-bool KuStrUtil::isFloat(char* str)
-{
-	return std::regex_match(str, std::regex("^[-+]?[0-9]*\\.?[0-9]+$"));
+		[](unsigned char c) { return ::tolower(c); });
 }
 
 
