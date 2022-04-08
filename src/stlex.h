@@ -123,6 +123,7 @@ namespace stdx
 	template<typename A, typename B>
 	void copy(const std::vector<A> &from, std::vector<B>& to)
 	{
+		to.clear();
 		to.reserve(from.size());
 		for (const auto& i : from)
 			to.push_back(static_cast<B>(i));

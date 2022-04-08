@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <vector>
 
 
 // 对类型T的封装类

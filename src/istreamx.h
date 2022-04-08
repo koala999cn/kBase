@@ -1,5 +1,6 @@
 #pragma once
 #include <istream>
+#include <vector>
 #include "KmEndianed.h"
 
 
@@ -79,8 +80,10 @@ namespace stdx
 		template<typename T>
 		typename std::enable_if_t<std::is_scalar<T>::value, istreamx&>
 		read(T* val, unsigned count) {
-			if(bin_ && strm_.read(reinterpret_cast<char*>(val), sizeof(T) * count))
-				matchEndian(val, count);
+			if (bin_) {
+				if(strm_.read(reinterpret_cast<char*>(val), sizeof(T) * count))
+				    matchEndian(val, count);
+			}
 			else {
 				while (strm_ && count-- != 0) 
 					strm_ >> std::ws >> *val++;

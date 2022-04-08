@@ -162,10 +162,13 @@ public:
     static void scale(KREAL x[], unsigned n, KREAL alpha); // x[i] *= alpha
     static void shift(KREAL x[], unsigned n, KREAL scalar); // x[i] += scalar
     static void subMean(KREAL x[], unsigned n); // x[i] -= mean
+    static void recip(KREAL x[], unsigned n); // 倒数: x[i] = 1 / x[i]
+    static void recip(const KREAL x[], KREAL r[], unsigned n); // 倒数: r[i] = 1 / x[i]
 
     static void add(const KREAL x[], const KREAL y[], KREAL r[], unsigned n); // r[i] = x[i] + y[i]
     static void sub(const KREAL x[], const KREAL y[], KREAL r[], unsigned n); // r[i] = x[i] - y[i]
     static void mul(const KREAL x[], const KREAL y[], KREAL r[], unsigned n); // r[i] = x[i] * y[i]
+    static void div(const KREAL x[], const KREAL y[], KREAL r[], unsigned n); // r[i] = x[i] / y[i]
 
     static KREAL dot(const KREAL x[], const KREAL y[], unsigned n); // Sum(x[i]*y[i])
 
@@ -237,8 +240,10 @@ public:
 
     /*************** SEARCH ALGORITHM *****************/
 
-    static KREAL min(const KREAL x[], unsigned n);
-    static KREAL max(const KREAL x[], unsigned n);
+    static KREAL min(KREAL x, KREAL y, KREAL z); // return min(x, y, z)
+    static KREAL max(KREAL x, KREAL y, KREAL z); // return max(x, y, z)
+    static KREAL min(const KREAL x[], unsigned n); // return min{x[i]}
+    static KREAL max(const KREAL x[], unsigned n); // return max{x[i]}
     static std::pair<KREAL, KREAL> minmax(const KREAL x[], unsigned n);
 
     static unsigned argMin(const KREAL x[], unsigned n); // 返回最小值的索引[0, dim)
@@ -590,51 +595,51 @@ KREAL KtuMath<KREAL>::dot(const KREAL x[], const KREAL y[], unsigned n)
 }
 
 template<class KREAL>
-void KtuMath<KREAL>::add(const KREAL x[], const KREAL y[], KREAL z[], unsigned n)
-{
-    unsigned i = 0;
-    for (; i + 4 <= n; i += 4) {
-        z[i] = x[i] + y[i];
-        z[i + 1] = x[i + 1] + y[i + 1];
-        z[i + 2] = x[i + 2] + y[i + 2];
-        z[i + 3] = x[i + 3] + y[i + 3];
-    }
-    for (; i < n; i++)
-        z[i] = x[i] + y[i];
-}
-
-template<class KREAL>
-void KtuMath<KREAL>::sub(const KREAL x[], const KREAL y[], KREAL z[], unsigned n)
-{
-    unsigned i = 0;
-    for (; i + 4 <= n; i += 4) {
-        z[i] = x[i] - y[i];
-        z[i + 1] = x[i + 1] - y[i + 1];
-        z[i + 2] = x[i + 2] - y[i + 2];
-        z[i + 3] = x[i + 3] - y[i + 3];
-    }
-    for (; i < n; i++)
-        z[i] = x[i] - y[i];
-}
-
-template<class KREAL>
 void KtuMath<KREAL>::subMean(KREAL x[], unsigned n)
 {
     shift(x, n, -mean(x, n));
 }
 
+
 template<class KREAL>
-void KtuMath<KREAL>::mul(const KREAL x[], const KREAL y[], KREAL z[], unsigned n)
+void KtuMath<KREAL>::recip(KREAL x[], unsigned n)
 {
-    unsigned i = 0;
-    for(; i + 4 <= n; i += 4) {
-        z[i] = x[i] * y[i];
-        z[i+1] = x[i+1] * y[i+1];
-        z[i+2] = x[i+2] * y[i+2];
-        z[i+3] = x[i+3] * y[i+3];
-    }
-    for(; i < n; i++)
-        z[i] = x[i] * y[i];
+    forEach(x, n, [](KREAL x) { return 1 / x; });
+}
+
+
+template<class KREAL>
+void KtuMath<KREAL>::recip(const KREAL x[], KREAL r[], unsigned n)
+{
+    forEach(x, r, n, [](KREAL x) { return 1 / x; });
+}
+
+
+template<class KREAL>
+void KtuMath<KREAL>::add(const KREAL x[], const KREAL y[], KREAL r[], unsigned n)
+{
+    forEach(x, y, r, n, [](KREAL x, KREAL y) { return x + y; });
+}
+
+
+template<class KREAL>
+void KtuMath<KREAL>::sub(const KREAL x[], const KREAL y[], KREAL r[], unsigned n)
+{
+    forEach(x, y, r, n, [](KREAL x, KREAL y) { return x - y; });
+}
+
+
+template<class KREAL>
+void KtuMath<KREAL>::mul(const KREAL x[], const KREAL y[], KREAL r[], unsigned n)
+{
+    forEach(x, y, r, n, [](KREAL x, KREAL y) { return x * y; });
+}
+
+
+template<class KREAL>
+void KtuMath<KREAL>::div(const KREAL x[], const KREAL y[], KREAL r[], unsigned n)
+{
+    forEach(x, y, r, n, [](KREAL x, KREAL y) { return x / y; });
 }
 
 
@@ -656,11 +661,26 @@ KREAL KtuMath<KREAL>::nonZeroMean(const KREAL x[], unsigned n)
 
 
 template<class KREAL>
+KREAL KtuMath<KREAL>::min(KREAL x, KREAL y, KREAL z)
+{
+    return std::min(x, std::min(y, z));
+}
+
+
+template<class KREAL>
+KREAL KtuMath<KREAL>::max(KREAL x, KREAL y, KREAL z)
+{
+    return std::max(x, std::max(y, z));
+}
+
+
+template<class KREAL>
  KREAL KtuMath<KREAL>::min(const KREAL x[], unsigned n)
 {
     auto iter = std::min_element(x, x + n);
     return *iter;
 }
+
 
 template<class KREAL>
 KREAL KtuMath<KREAL>::max(const KREAL x[], unsigned n)
@@ -669,12 +689,14 @@ KREAL KtuMath<KREAL>::max(const KREAL x[], unsigned n)
     return *iter;
 }
 
+
 template<class KREAL>
 std::pair<KREAL, KREAL> KtuMath<KREAL>::minmax(const KREAL x[], unsigned n)
 {
     auto iter = std::minmax_element(x, x + n);
     return { *iter.first, *iter.second };
 }
+
 
 template<class KREAL>
 unsigned KtuMath<KREAL>::argMin(const KREAL x[], unsigned n)
