@@ -13,10 +13,11 @@ class bimap
 public:
 	bimap() = default;
 
-	bimap(size_t mapSize) : x2y_(mapSize*1.25), y2x_(mapSize*1.25) {}
+	bimap(size_t mapSize) { reserve(mapSize); }
 
 	void reserve(size_t mapSize) {
-		x2y_.reserve(mapSize*1.25), y2x_.reserve(mapSize*1.25);
+		x2y_.reserve(size_t(mapSize * 1.25));
+		y2x_.reserve(size_t(mapSize * 1.25));
 	}
 
 	void clear() {
